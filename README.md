@@ -10,6 +10,18 @@ pip install bs4
 Folium is for maps. Selenium and bs4 are for scraping
 
 ### Running
+```
+python3 create_school_map_for_state.py --grade GRADELEVEL --state YOURSTATE
+```
+
+YOURSTATE is a US state.
+
+GRADELEVEL can be
+- elementary
+- middle
+- high
+
+Example:
 
 ```
 python3 create_school_map_for_state.py --grade elementary --state washington
