@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 from util.geo_util import OpenStreetMap
+import urllib.parse
 class GsoSchools:
     @staticmethod
     def get_url(soup):
@@ -42,6 +43,8 @@ class GsoSchools:
         return scores
     @staticmethod
     def get_info(fpath):
+        address = urllib.parse.unquote(os.path.split(fpath)[1])
+
         with open(fpath, 'r') as f:
             html_content = f.read()
         soup = BeautifulSoup(html_content, 'html.parser')
@@ -52,11 +55,11 @@ class GsoSchools:
         except:
             print(f"Unable to find URL for {fpath}")
         
-        try:
-            address = GsoSchools.get_street_address(soup)
-            info['address']=address
-        except:
-            print(f"Unable to find Address for {fpath}")
+        # try:
+        #     address = GsoSchools.get_street_address(soup)
+        #     info['address']=address
+        # except:
+        #     print(f"Unable to find Address for {fpath}")
 
         try:
             scores = GsoSchools.get_scores(soup)

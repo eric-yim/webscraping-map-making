@@ -8,6 +8,7 @@ import os
 from util.scraper_util import Scraper
 from util.usa_util import POP_CITIES
 from bs4 import BeautifulSoup
+import urllib.parse
 # BASE_URL = "https://www.greatschools.org/washington/schools/?gradeLevels%5B%5D=e"
 BASE_FORMAT = "https://www.greatschools.org/{state}/schools/{gradelevel}{pagenumber}"
 GRADE_LEVELS = {
@@ -52,19 +53,35 @@ class GSO_Util:
         soup = BeautifulSoup(html_content, 'html.parser')
 
         school_links = []
+
+        # section class="school-list"
+        list_section = soup.find_all('section', class_='school-list')
+        assert len(list_section)==1, f"Expected 1 school-list section"
+        list_section = list_section[0]
+
         # Find all <li> items with class "unsaved"
-        unsaved_items = soup.find_all('li', class_='unsaved')
+        unsaved_items = list_section.find_all('li', class_='unsaved')
 
         for item in unsaved_items:
+            encoded_address = None
             # Find all <a> elements within the current item
-            links = item.find_all('a')
+            header = item.find('div', class_='header')
+            links = header.find_all('a')
             
             sub_links = []
             for link in links:
                 href = link.get('href')
                 if href.startswith(link_startswith):
                     sub_links.append(href)
-            school_links.append(base_url + sub_links[0])
+            
+
+            address_div = item.find('div', class_='address')
+            if address_div:
+                address_text = address_div.find(string=True, recursive=False).strip()
+                encoded_address = urllib.parse.quote(address_text)
+
+            school_links.append((base_url + sub_links[0], encoded_address))
+
         return school_links
 
 def check_invalid(save_location):

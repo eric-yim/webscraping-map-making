@@ -3,6 +3,7 @@ from util.usa_util import USA_UTIL
 from util.greatschoolsorg_util import GSO_Util, check_invalid
 from util.gso_schools_util import GsoSchools
 from util.scraper_util import Scraper
+from util.folium_util import FoliumUtil
 import folium
 import os, glob, json
 
@@ -11,8 +12,9 @@ def argparse_args():
     parser = argparse.ArgumentParser()
 
     # Add arguments
+    parser.add_argument('--skippable', action='store_true', dest='skippable', help='flag for skipping completed actions')
     parser.add_argument('--data_paginations', default='school_paginations', help='save location for pagination htmls')
-    parser.add_argument('--max_paginations', default='120', type=int, help='max paginations to view')
+    parser.add_argument('--max_paginations', default='500', type=int, help='max paginations to view')
     parser.add_argument('--data_school_pages', default='school_htmls', help='save location for each schools page')
     parser.add_argument('--data_school_info', default='school_info', help='save location for each schools info')
     parser.add_argument('--data_maps', default='saved_maps', help='save location for maps')
@@ -22,9 +24,6 @@ def argparse_args():
 
     # Parse the command-line arguments
     return parser.parse_args()
-def download_page(base_paginations, page, url):
-    save_location = os.path.join(base_paginations, str(page).zfill(4) + ".html")
-    return Scraper.download_page(url, save_location, check_fnc=check_invalid)
 
 def download_paginations(args):
     USA_UTIL.assert_state(args.state)
@@ -34,9 +33,15 @@ def download_paginations(args):
     # Iterate through 100 pages. if failed, break
     for page in range(1,args.max_paginations):
         url = GSO_Util.get_url(args.state, args.grade, page)
-        if not (download_page(base_paginations, page, url)):
+
+        save_location = os.path.join(base_paginations, str(page).zfill(4) + ".html")
+        if args.skippable and (os.path.exists(save_location)):
+            print(f"Already exists {save_location}.")
+            continue
+        if not Scraper.download_page(url, save_location, check_fnc=check_invalid):
             print(f"Failed at page {page}. Stopping.")
             break
+            
     print("="*40)
     print("Completed operation: download_paginations")
     print("="*40)
@@ -48,8 +53,13 @@ def download_school_pages(args, base_paginations):
     j = 0
     for item in listing:
         school_links = GSO_Util.get_school_links_in_html(item, args.state)
-        for url in school_links:
-            save_location = os.path.join(base_school_pages , str(j).zfill(6) + '.html')
+        for url,encoded_address in school_links:
+
+            save_location = os.path.join(base_school_pages , encoded_address)
+            if args.skippable and (os.path.exists(save_location)):
+                print(f"Already exists {save_location}.")
+                j+=1
+                continue
             if not Scraper.download_page(url, save_location):
                 print(f"Failed on {url}")
             j+=1
@@ -63,8 +73,8 @@ def save_info(info_file, info):
         f.write(my_dump)
         f.write('\n')
 def read_school_info(args, base_school_pages):
-    listing = sorted(glob.glob(os.path.join(base_school_pages, "*.html")))
-    os.makedirs(args.data_school_info)
+    listing = sorted(glob.glob(os.path.join(base_school_pages, "*")))
+    os.makedirs(args.data_school_info, exist_ok=True)
     info_file = os.path.join(args.data_school_info,f'{args.state}.json')
     if os.path.exists(info_file):
         os.remove(info_file)
@@ -80,6 +90,8 @@ def read_school_info(args, base_school_pages):
     return info_file
 
 def score_to_rating(s):
+    if s is None:
+        return None
     if s > 82:
         return 6
     elif s > 77:
@@ -99,7 +111,7 @@ def construct_marker(line, m, num_schools):
         address = info.get('address','No Address')
         href = info.get('url','')
         scores = info.get('scores',{})
-        mean_score = 0
+        mean_score = None
         if len(scores)>0:
             mean_score = sum([float(v.replace('%','')) for v in scores.values()])/float(len(scores))
         rating = score_to_rating(mean_score)
@@ -115,6 +127,7 @@ def construct_marker(line, m, num_schools):
 
 
 def save_map(args, info_file):
+    os.makedirs(args.data_maps, exist_ok=True)
     map_name = os.path.join(args.data_maps, f'{args.state.lower()}_{args.grade.lower()}.html')
     num_schools = 0
     location = USA_UTIL.get_location_by_state(args.state)

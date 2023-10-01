@@ -19,4 +19,5 @@ COLOR_MAPPING = color_mapping = {
 class FoliumUtil:
     @staticmethod
     def get_colored_icon(score):
-        return folium.Icon(color=COLOR_MAPPING[score])
+        color = COLOR_MAPPING.get(score,'gray')
+        return folium.Icon(color=color)
