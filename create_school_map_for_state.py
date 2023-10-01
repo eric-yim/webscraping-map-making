@@ -71,7 +71,7 @@ def read_school_info(args, base_school_pages):
     all_info = []
     for item in listing:
         print(f"Processing {item}")
-        info = GsoSchools.get_info(fpath)
+        info = GsoSchools.get_info(item)
         info['local_file'] = item
         save_info(info_file, info)
     print("="*40)

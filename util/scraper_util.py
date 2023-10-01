@@ -44,6 +44,10 @@ class Scraper:
 
             print(f"HTML content has been downloaded and saved to {save_location}.")
             success=True
+        except Exception:
+            print("Scraper Oops")
+
+
         finally:
             # Close the WebDriver
             driver.quit()
