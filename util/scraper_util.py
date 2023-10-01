@@ -7,10 +7,11 @@ from selenium.webdriver.support import expected_conditions as EC
 import os
 CHROME_PATH = "/usr/lib/chromium-browser/chromedriver"
 assert os.path.exists(CHROME_PATH), "You need to download chromedriver and specify the location of chromedriver in util/scraper_util.py. Google how to download and find your chromedriver"
+
 class Scraper:
 
     @staticmethod
-    def download_page(url, save_location):
+    def download_page(url, save_location, check_fnc = None):
         # Create a Chrome WebDriver instance
         chrome_service = ChromeService(CHROME_PATH)  # Replace with your chromedriver path
         chrome_options = webdriver.ChromeOptions()
@@ -37,9 +38,15 @@ class Scraper:
             with open(save_location, "w", encoding="utf-8") as file:
                 file.write(page_source)
 
+            if (check_fnc is not None) and (check_fnc(save_location)):
+                raise Exception("Invalid content at URL")
+
+
             print(f"HTML content has been downloaded and saved to {save_location}.")
             success=True
         finally:
             # Close the WebDriver
             driver.quit()
         return success
+
+

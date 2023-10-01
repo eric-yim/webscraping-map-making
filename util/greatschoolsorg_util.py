@@ -7,6 +7,7 @@ from selenium.webdriver.support import expected_conditions as EC
 import os
 from util.scraper_util import Scraper
 from util.usa_util import POP_CITIES
+from bs4 import BeautifulSoup
 # BASE_URL = "https://www.greatschools.org/washington/schools/?gradeLevels%5B%5D=e"
 BASE_FORMAT = "https://www.greatschools.org/{state}/schools/{gradelevel}{pagenumber}"
 GRADE_LEVELS = {
@@ -65,3 +66,14 @@ class GSO_Util:
                     sub_links.append(href)
             school_links.append(base_url + sub_links[0])
         return school_links
+
+def check_invalid(save_location):
+    with open(save_location, 'r') as f:
+        html_content = f.read()
+    soup = BeautifulSoup(html_content, 'html.parser')
+    no_results_div = soup.find_all('div', class_='no-results')
+    if len(no_results_div) > 0:
+        os.remove(save_location)
+        return True
+    return False
+    

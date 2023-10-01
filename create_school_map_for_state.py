@@ -1,10 +1,11 @@
 import argparse
 from util.usa_util import USA_UTIL
-from util.greatschoolsorg_util import GSO_Util
+from util.greatschoolsorg_util import GSO_Util, check_invalid
 from util.gso_schools_util import GsoSchools
 from util.scraper_util import Scraper
 import folium
 import os, glob, json
+
 def argparse_args():
     # Create an ArgumentParser object
     parser = argparse.ArgumentParser()
@@ -23,7 +24,8 @@ def argparse_args():
     return parser.parse_args()
 def download_page(base_paginations, page, url):
     save_location = os.path.join(base_paginations, str(page).zfill(4) + ".html")
-    return Scraper.download_page(url, save_location)
+    return Scraper.download_page(url, save_location, check_fnc=check_invalid)
+
 def download_paginations(args):
     USA_UTIL.assert_state(args.state)
     base_paginations = os.path.join(args.data_paginations,args.state)
@@ -46,7 +48,7 @@ def download_school_pages(args, base_paginations):
     j = 0
     for item in listing:
         school_links = GSO_Util.get_school_links_in_html(item, args.state)
-        for school_link in school_links:
+        for url in school_links:
             save_location = os.path.join(base_school_pages , str(j).zfill(6) + '.html')
             if not Scraper.download_page(url, save_location):
                 print(f"Failed on {url}")
@@ -64,7 +66,8 @@ def read_school_info(args, base_school_pages):
     listing = sorted(glob.glob(os.path.join(base_school_pages, "*.html")))
     os.makedirs(args.data_school_info)
     info_file = os.path.join(args.data_school_info,f'{args.state}.json')
-    os.remove(info_file)
+    if os.path.exists(info_file):
+        os.remove(info_file)
     all_info = []
     for item in listing:
         print(f"Processing {item}")
