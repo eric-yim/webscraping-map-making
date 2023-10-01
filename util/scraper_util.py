@@ -4,12 +4,15 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+import os
+CHROME_PATH = "/usr/lib/chromium-browser/chromedriver"
+assert os.path.exists(CHROME_PATH), "You need to download chromedriver and specify the location of chromedriver in util/scraper_util.py. Google how to download and find your chromedriver"
 class Scraper:
 
     @staticmethod
     def download_page(url, save_location):
         # Create a Chrome WebDriver instance
-        chrome_service = ChromeService("/usr/lib/chromium-browser/chromedriver")  # Replace with your chromedriver path
+        chrome_service = ChromeService(CHROME_PATH)  # Replace with your chromedriver path
         chrome_options = webdriver.ChromeOptions()
         chrome_options.add_argument("--headless")  # Run in headless mode (no GUI)
         driver = webdriver.Chrome(service=chrome_service, options=chrome_options)

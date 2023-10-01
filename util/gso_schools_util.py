@@ -1,6 +1,6 @@
 from bs4 import BeautifulSoup
 from util.geo_util import OpenStreetMap
-class WashingtonSchools:
+class GsoSchools:
     @staticmethod
     def get_url(soup):
         canonical_link = soup.find('link', {'rel': 'canonical'})
@@ -47,19 +47,19 @@ class WashingtonSchools:
         soup = BeautifulSoup(html_content, 'html.parser')
         info = {}
         try:
-            url = WashingtonSchools.get_url(soup)
+            url = GsoSchools.get_url(soup)
             info['url']=url
         except:
             print(f"Unable to find URL for {fpath}")
         
         try:
-            address = WashingtonSchools.get_street_address(soup)
+            address = GsoSchools.get_street_address(soup)
             info['address']=address
         except:
             print(f"Unable to find Address for {fpath}")
 
         try:
-            scores = WashingtonSchools.get_scores(soup)
+            scores = GsoSchools.get_scores(soup)
             info['scores']=scores
         except:
             print(f"Unable to find Scores for {fpath}")
