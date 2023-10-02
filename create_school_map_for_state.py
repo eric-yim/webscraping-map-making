@@ -13,6 +13,7 @@ def argparse_args():
 
     # Add arguments
     parser.add_argument('--skippable', action='store_true', dest='skippable', help='flag for skipping completed actions')
+    parser.add_argument('--skip_info_read', action='store_true', dest='skip_info_read', help='flag for skipping info read step')
     parser.add_argument('--data_paginations', default='school_paginations', help='save location for pagination htmls')
     parser.add_argument('--max_paginations', default='500', type=int, help='max paginations to view')
     parser.add_argument('--data_school_pages', default='school_htmls', help='save location for each schools page')
@@ -27,7 +28,7 @@ def argparse_args():
 
 def download_paginations(args):
     USA_UTIL.assert_state(args.state)
-    base_paginations = os.path.join(args.data_paginations,f"{args.state}_{args.gradelevel}")
+    base_paginations = os.path.join(args.data_paginations,f"{args.state}_{args.grade}")
     
     os.makedirs(base_paginations, exist_ok=True)
     # Iterate through 100 pages. if failed, break
@@ -76,7 +77,7 @@ def read_school_info(args, base_school_pages):
     listing = sorted(glob.glob(os.path.join(base_school_pages, "*")))
     os.makedirs(args.data_school_info, exist_ok=True)
     info_file = os.path.join(args.data_school_info,f'{args.state}.json')
-    if args.skippable and os.path.exists(info_file):
+    if args.skip_info_read and os.path.exists(info_file):
         return info_file
     elif os.path.exists(info_file):
         os.remove(info_file)
