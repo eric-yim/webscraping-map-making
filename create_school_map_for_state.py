@@ -49,7 +49,7 @@ def download_paginations(args):
     return base_paginations
 def download_school_pages(args, base_paginations):
     listing = sorted(glob.glob(os.path.join(base_paginations, "*.html")))
-    base_school_pages = os.path.join(args.data_school_pages, f"{args.state}_{args.gradelevel}")
+    base_school_pages = os.path.join(args.data_school_pages, f"{args.state}_{args.grade}")
     os.makedirs(base_school_pages, exist_ok=True)
     j = 0
     for item in listing:
