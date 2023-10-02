@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 from util.geo_util import OpenStreetMap
 import urllib.parse
+import os
 class GsoSchools:
     @staticmethod
     def get_url(soup):
@@ -43,7 +44,6 @@ class GsoSchools:
         return scores
     @staticmethod
     def get_info(fpath):
-        address = urllib.parse.unquote(os.path.split(fpath)[1])
 
         with open(fpath, 'r') as f:
             html_content = f.read()
@@ -55,6 +55,9 @@ class GsoSchools:
         except:
             print(f"Unable to find URL for {fpath}")
         
+
+        address = urllib.parse.unquote(os.path.split(fpath)[1])
+        info['address']= address
         # try:
         #     address = GsoSchools.get_street_address(soup)
         #     info['address']=address

@@ -27,7 +27,7 @@ def argparse_args():
 
 def download_paginations(args):
     USA_UTIL.assert_state(args.state)
-    base_paginations = os.path.join(args.data_paginations,args.state)
+    base_paginations = os.path.join(args.data_paginations,f"{args.state}_{args.gradelevel}")
     
     os.makedirs(base_paginations, exist_ok=True)
     # Iterate through 100 pages. if failed, break
@@ -48,7 +48,7 @@ def download_paginations(args):
     return base_paginations
 def download_school_pages(args, base_paginations):
     listing = sorted(glob.glob(os.path.join(base_paginations, "*.html")))
-    base_school_pages = os.path.join(args.data_school_pages, args.state)
+    base_school_pages = os.path.join(args.data_school_pages, f"{args.state}_{args.gradelevel}")
     os.makedirs(base_school_pages, exist_ok=True)
     j = 0
     for item in listing:
@@ -76,7 +76,9 @@ def read_school_info(args, base_school_pages):
     listing = sorted(glob.glob(os.path.join(base_school_pages, "*")))
     os.makedirs(args.data_school_info, exist_ok=True)
     info_file = os.path.join(args.data_school_info,f'{args.state}.json')
-    if os.path.exists(info_file):
+    if args.skippable and os.path.exists(info_file):
+        return info_file
+    elif os.path.exists(info_file):
         os.remove(info_file)
     all_info = []
     for item in listing:
@@ -113,6 +115,7 @@ def construct_marker(line, m, num_schools):
         scores = info.get('scores',{})
         mean_score = None
         if len(scores)>0:
+            print(scores.values())
             mean_score = sum([float(v.replace('%','')) for v in scores.values()])/float(len(scores))
         rating = score_to_rating(mean_score)
         score_string = json.dumps(scores)
