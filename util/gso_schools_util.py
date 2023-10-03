@@ -19,29 +19,53 @@ class GsoSchools:
         span_items = target_divs[0].find_all('span')
         address = ', '.join([span.text for span in span_items])
         return address
+
     @staticmethod
     def get_scores(soup):
-
-        # Find scores
-        bar_graph_unified_divs = soup.find_all('div', class_='bar-graph-unified')
-
-        # Loop through and print the text of each matching div
-        SUBJECTS = {'English', 'Math', 'Science'}
+        correct_div = soup.find('div', id='Test_scores')
+        if not correct_div:
+            raise Exception("Couldn't find Test_scores div")
+        
+        bg_divs = correct_div.find_all('div', class_='bar-graph-unified')
         scores = {}
-        for div in bar_graph_unified_divs:
-            spans = div.find_all('span')
-            subject = None
-            for span in spans:
-                if span.text in SUBJECTS:
-                    subject = span.text
-                    break
-            if subject is None:
-                continue
-            perc_divs = div.find_all('div', class_ = 'percentage')
-            assert len(perc_divs)==1
+        
+        for bg_div in bg_divs:
+            breakdown_divs = bg_div.find_all('div', class_='breakdown')
+            assert len(breakdown_divs)==1, "breakdown divs expected to be len 1"
+            spans = breakdown_divs[0].find_all('span', recursive=False)
+
+            assert len(spans)==1, "Subject spans expected to be len 1"
+            subject = spans[0].text
+
+            perc_divs = bg_div.find_all('div', class_ = 'percentage')
+            assert len(perc_divs)==1, "Expects one percentage div"
             scores[subject]=perc_divs[0].text
-        assert len(scores)==len(SUBJECTS), "Cant find scores"
         return scores
+    # @staticmethod
+    # def get_scores2(soup):
+    #     correct_div = soup.find('div', id='Test_scores')
+    #     # Find scores
+    #     bar_graph_unified_divs = soup.find_all('div', class_='bar-graph-unified')
+
+    #     # Loop through and print the text of each matching div
+    #     SUBJECTS = {'English', 'Math', 'Science', 'Reading'}
+    #     scores = {}
+    #     for div in bar_graph_unified_divs:
+    #         spans = div.find_all('span')
+    #         subject = None
+    #         for span in spans:
+    #             if span.text in SUBJECTS:
+    #                 subject = span.text
+    #                 break
+    #         if subject is None:
+    #             continue
+    #         perc_divs = div.find_all('div', class_ = 'percentage')
+    #         assert len(perc_divs)==1
+    #         scores[subject]=perc_divs[0].text
+    #     #assert len(scores)==len(SUBJECTS), "Cant find scores"
+    #     print(len(scores))
+    #     assert len(scores)>0, "Cant find scores"
+    #     return scores
     @staticmethod
     def get_info(fpath):
 

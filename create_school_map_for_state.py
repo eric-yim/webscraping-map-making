@@ -6,6 +6,7 @@ from util.scraper_util import Scraper
 from util.folium_util import FoliumUtil
 import folium
 import os, glob, json
+import re
 
 def argparse_args():
     # Create an ArgumentParser object
@@ -76,7 +77,7 @@ def save_info(info_file, info):
 def read_school_info(args, base_school_pages):
     listing = sorted(glob.glob(os.path.join(base_school_pages, "*")))
     os.makedirs(args.data_school_info, exist_ok=True)
-    info_file = os.path.join(args.data_school_info,f'{args.state}.json')
+    info_file = os.path.join(args.data_school_info,f'{args.state}_{args.grade}.json')
     if args.skip_info_read and os.path.exists(info_file):
         return info_file
     elif os.path.exists(info_file):
@@ -106,7 +107,10 @@ def score_to_rating(s):
     elif s > 50:
         return 2
     return 1
-    
+def extract_numbers(text):
+    # Use regular expression to find all numbers in the text
+    numbers = re.findall(r'\d+\.*\d*', text)
+    return numbers[0]
 def construct_marker(line, m, num_schools):
     
     info = json.loads(line)
@@ -116,8 +120,10 @@ def construct_marker(line, m, num_schools):
         scores = info.get('scores',{})
         mean_score = None
         if len(scores)>0:
-            print(scores.values())
-            mean_score = sum([float(v.replace('%','')) for v in scores.values()])/float(len(scores))
+            # print(scores.values())
+            tmp_nums = [float(extract_numbers(v)) for v in scores.values()]
+            print(tmp_nums)
+            mean_score = sum(tmp_nums)/float(len(scores))
         rating = score_to_rating(mean_score)
         score_string = json.dumps(scores)
         popup_html = f'<a href="{href}" target="_blank">{address}<br>{scores}</a>'
