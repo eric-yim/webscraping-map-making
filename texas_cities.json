@@ -1,0 +1,34 @@
+{
+    "Austin": {
+      "latitude": 30.2672,
+      "longitude": -97.7431
+    },
+    "Houston": {
+      "latitude": 29.7604,
+      "longitude": -95.3698
+    },
+    "Dallas": {
+      "latitude": 32.7767,
+      "longitude": -96.7970
+    },
+    "San_Antonio": {
+      "latitude": 29.4241,
+      "longitude": -98.4936
+    },
+    "El_Paso": {
+      "latitude": 31.7619,
+      "longitude": -106.4850
+    },
+    "Corpus_Christi": {
+      "latitude": 27.8006,
+      "longitude": -97.3964
+    },
+    "Lubbock": {
+      "latitude": 33.5779,
+      "longitude": -101.8552
+    },
+    "Midland": {
+      "latitude": 31.9973,
+      "longitude": -102.0779
+    }
+  }

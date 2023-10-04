@@ -4,6 +4,7 @@ from util.greatschoolsorg_util import GSO_Util, check_invalid
 from util.gso_schools_util import GsoSchools
 from util.scraper_util import Scraper
 from util.folium_util import FoliumUtil
+from util.math_util import MathUtil
 import folium
 import os, glob, json
 import re
@@ -14,6 +15,8 @@ def argparse_args():
 
     # Add arguments
     parser.add_argument('--skippable', action='store_true', dest='skippable', help='flag for skipping completed actions')
+    parser.add_argument('--multi_map_config', required=False, help='json of map centers')
+    parser.add_argument('--multi_map_distance', default='100', type=float, help='km to map center')
     parser.add_argument('--skip_info_read', action='store_true', dest='skip_info_read', help='flag for skipping info read step')
     parser.add_argument('--data_paginations', default='school_paginations', help='save location for pagination htmls')
     parser.add_argument('--max_paginations', default='500', type=int, help='max paginations to view')
@@ -111,18 +114,19 @@ def extract_numbers(text):
     # Use regular expression to find all numbers in the text
     numbers = re.findall(r'\d+\.*\d*', text)
     return numbers[0]
-def construct_marker(line, m, num_schools):
+def construct_marker(line, m, num_schools, map_center, filter_dist):
     
     info = json.loads(line)
-    if 'location' in info:
+    if ('location' in info) and (is_near(
+            [map_center['latitude'],map_center['longitude']],
+            info['location'], 
+            filter_dist)):
         address = info.get('address','No Address')
         href = info.get('url','')
         scores = info.get('scores',{})
         mean_score = None
         if len(scores)>0:
-            # print(scores.values())
             tmp_nums = [float(extract_numbers(v)) for v in scores.values()]
-            print(tmp_nums)
             mean_score = sum(tmp_nums)/float(len(scores))
         rating = score_to_rating(mean_score)
         score_string = json.dumps(scores)
@@ -134,15 +138,20 @@ def construct_marker(line, m, num_schools):
         ).add_to(m)
         num_schools+=1
     return num_schools
+def is_near(point0, point1, filter_dist):
+    return MathUtil.haversine(*point0, *point1) < filter_dist
 
-
-def save_map(args, info_file):
+def save_map(args, info_file, location = None, map_name = None):
     os.makedirs(args.data_maps, exist_ok=True)
-    map_name = os.path.join(args.data_maps, f'{args.state.lower()}_{args.grade.lower()}.html')
+    if map_name is None:
+        map_name = os.path.join(args.data_maps, f'{args.state.lower()}_{args.grade.lower()}.html')
     num_schools = 0
-    location = USA_UTIL.get_location_by_state(args.state)
+    if location is None:
+        location = USA_UTIL.get_location_by_state(args.state)
     map_center = [location['latitude'], location['longitude']]
     m = folium.Map(location=map_center, zoom_start=10)
+
+    filter_dist = args.multi_map_distance if args.multi_map_config else 100_000
 
     with open(info_file, 'r') as f:
         # Read the first line from the file
@@ -150,7 +159,7 @@ def save_map(args, info_file):
         
         # Check if we've reached the end of the file
         while line:
-            num_schools = construct_marker(line.strip(), m, num_schools)
+            num_schools = construct_marker(line.strip(), m, num_schools, location, filter_dist)
             
             # Read the next line
             line = f.readline()
@@ -167,6 +176,17 @@ def main(args):
     base_school_pages = download_school_pages(args, base_paginations)
     info_file = read_school_info(args, base_school_pages)
     save_map(args, info_file)
+def multi_map(args):
+    my_cities = json.load(open(args.multi_map_config, 'r'))
+    info_file = os.path.join(args.data_school_info,f'{args.state}_{args.grade}.json')
+    for k,location in my_cities.items():
+        map_name = f"{args.state}_{k}_{args.grade}.html"
+        save_map(args, info_file, location, map_name)
+
+
 if __name__=='__main__':
     args = argparse_args()
-    main(args)
+    if args.multi_map_config:
+        multi_map(args)
+    else:
+        main(args)
