@@ -8,6 +8,7 @@ from util.pass_functions import WithinDistance, NotWithinDistance
 import folium
 import os, glob, json
 import re
+import concurrent.futures
 """
 Expected format of multi_map_config
 {"cityName":{"latitude":NUMBER, "longitude":NUMBER}}
@@ -64,23 +65,33 @@ def download_school_pages(args, base_paginations):
     listing = sorted(glob.glob(os.path.join(base_paginations, "*.html")))
     base_school_pages = os.path.join(args.data_school_pages, f"{args.state}_{args.grade}")
     os.makedirs(base_school_pages, exist_ok=True)
-    j = 0
+
     scraper = Scraper()
+    
+    scrape_items = []
     for item in listing:
         school_links = GSO_Util.get_school_links_in_html(item, args.state)
         for url,encoded_address in school_links:
-
+            
             save_location = os.path.join(base_school_pages , encoded_address)
             if args.skippable and (os.path.exists(save_location)):
                 print(f"Already exists {save_location}.")
-                j+=1
+
                 continue
-            if not scraper.download_page(url, save_location):
-                print(f"Failed on {url}")
-            j+=1
+            scrape_items.append((url,save_location))
+    
+    futures = []
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        for scrape_item in scrape_items:
+            futures.append(executor.submit(scraper.download_page_with_retry, *scrape_item))
+        concurrent.futures.wait(futures)
+    num_new_downloads = sum([future0.result() for future0 in futures])
+            # if not scraper.download_page(url, save_location):
+            #     print(f"Failed on {url}")
+
     scraper.close()
     print("="*40)
-    print(f"Completed operation: download_school_pages | {j} pages downloaded")
+    print(f"Completed operation: download_school_pages | {num_new_downloads} pages downloaded")
     print("="*40)
     return base_school_pages
 def save_info(info_file, info):

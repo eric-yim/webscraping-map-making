@@ -2,4 +2,9 @@ school_htmls
 school_paginations
 school_info
 saved_maps
+other
+animation*
+animate.py
+bar_plot.py
+*.html
 */__pycache__

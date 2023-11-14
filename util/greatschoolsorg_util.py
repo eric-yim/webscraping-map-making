@@ -31,8 +31,8 @@ class GSO_Util:
         return f"&page={page}"
     @staticmethod
     def get_state_str(state):
-        assert state.title() in POP_CITIES, f"Unkonwn state {state}"
-        return state.lower()
+        assert state.title() in POP_CITIES, f"Unknown state {state}"
+        return state.lower().replace(' ','-')
 
     @staticmethod
     def get_url(state,grade,page):
@@ -46,7 +46,7 @@ class GSO_Util:
     @staticmethod
     def get_school_links_in_html(fpath, state):
         base_url = "https://www.greatschools.org"
-        link_startswith = f"/{state}"
+        link_startswith = f"/{state.replace(' ','-')}"
         with open(fpath, 'r') as f:
             html_content = f.read()
         # Parse the HTML content
@@ -78,12 +78,25 @@ class GSO_Util:
             address_div = item.find('div', class_='address')
             if address_div:
                 address_text = address_div.find(string=True, recursive=False).strip()
+                address_text = remove_words_with_slash(address_text)
+
                 encoded_address = urllib.parse.quote(address_text)
 
             school_links.append((base_url + sub_links[0], encoded_address))
 
         return school_links
+# For cleaning the address name
+def remove_words_with_slash(input_string):
+    # Split the input string into words
+    words = input_string.split()
 
+    # Filter out words containing a "/"
+    filtered_words = [word for word in words if "/" not in word]
+
+    # Join the remaining words to form the final string
+    result_string = " ".join(filtered_words)
+
+    return result_string
 def check_invalid(save_location):
     with open(save_location, 'r') as f:
         html_content = f.read()

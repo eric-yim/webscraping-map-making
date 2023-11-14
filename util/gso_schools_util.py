@@ -67,7 +67,7 @@ class GsoSchools:
     #     assert len(scores)>0, "Cant find scores"
     #     return scores
     @staticmethod
-    def get_info(fpath):
+    def get_info(fpath, overwrite_lat_lon = {}):
 
         with open(fpath, 'r') as f:
             html_content = f.read()
@@ -81,7 +81,7 @@ class GsoSchools:
         
 
         address = urllib.parse.unquote(os.path.split(fpath)[1])
-        info['address']= address
+        info['address']= address.strip()
         # try:
         #     address = GsoSchools.get_street_address(soup)
         #     info['address']=address
@@ -95,10 +95,17 @@ class GsoSchools:
             print(f"Unable to find Scores for {fpath}")
 
         if 'address' in info:
-            try:
-                location = OpenStreetMap.get_location_from_address(info['address'])
-                info['location']=location
-            except:
-                print(f"Unable to find location for {address}")
+            if info['address'] in overwrite_lat_lon:
+                
+                info['location'] = overwrite_lat_lon[info['address']]
+                print("="*1000)
+                print(info['location'])
+                print("="*100)
+            else:
+                try:
+                    location = OpenStreetMap.get_location_from_address(info['address'])
+                    info['location']=location
+                except:
+                    print(f"Unable to find location for {address}")
 
         return info
